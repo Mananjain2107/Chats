@@ -6,6 +6,8 @@ const Chat=require("./Models/chat.js");
 
 app.set("views",path.join(__dirname,"views"));
 app.set("view engine","ejs");
+app.use(express.static(path.join(__dirname,"public")));
+app.use(express.urlencoded({extended:true}));
 
 main()
 .then(()=>{
@@ -17,18 +19,34 @@ async function main(){
     await mongoose.connect('mongodb://127.0.0.1:27017/Chats');
 }
 
-let chat1=new Chat({
-    from:"Manan",
-    to:"Mayank",
-    msg:"Hello",
-    createdAt:new Date(),
+//Index Route
+app.get("/chats",async(req,res)=>{
+    let chats=await Chat.find();
+    res.render("index.ejs",{chats});
 });
 
-chat1.save();
+//New Route
+app.get("/chats/new",(req,res)=>{
+    res.render("new.ejs");
+});
 
-app.get("/",(req,res)=>{
-    res.send("root is working");
-})
+//Create Route
+app.post("/chats",(req,res)=>{
+    let{from,msg,to}=req.body;
+    let newChat=new Chat({
+        from:from,
+        msg:msg,
+        to:to,
+        createdAt:new Date(),
+    })
+
+    newChat.save()
+    .then((res)=>{console.log("New chat created!")})
+    .catch((err)=>{console.log(err)});
+
+    res.redirect("/chats");
+});
+
 app.listen(8080,()=>{
     console.log("Server is working");
 })
